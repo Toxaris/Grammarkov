@@ -1,0 +1,18 @@
+name:                grammarkov
+version:             0.1.0.0
+synopsis:            Random text generator.
+-- description:         
+license:             BSD3
+license-file:        LICENSE
+author:              Tillmann Rendel
+maintainer:          rendel@informatik.uni-marburg.de
+-- copyright:           
+category:            Text
+build-type:          Simple
+cabal-version:       >=1.8
+
+executable grammarkov
+  main-is:             grammarkov.hs
+  -- other-modules:       
+  build-depends:       base ==4.5.*
+  hs-source-dirs:      src
