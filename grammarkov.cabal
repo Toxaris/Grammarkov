@@ -13,6 +13,8 @@ cabal-version:       >=1.8
 
 executable grammarkov
   main-is:             grammarkov.hs
-  -- other-modules:       
-  build-depends:       base ==4.5.*
+  other-modules:       Text.Grammarkov
+  build-depends:       base ==4.5.*,
+                       operational ==0.2.2.0,
+                       random == 1.0.*
   hs-source-dirs:      src
