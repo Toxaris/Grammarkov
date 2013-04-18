@@ -12,6 +12,7 @@ module Text.Grammarkov
   , generateRandom
   ) where
 
+import Control.Monad.Logic
 import Control.Monad.Operational
 
 import Data.String
@@ -47,11 +48,11 @@ p <|> q = choose [p, q]
 -- | Generate all sequences described by a Grammarkov sequence
 -- builder.
 generateAll :: Grammarkov e a -> [[e]]
-generateAll (Grammarkov p) = go p where
+generateAll (Grammarkov p) = observeAll (go p) where
   go p = case view p of
     Return _ -> return []
     Say x :>>= k -> fmap (x :) (go (k ()))
-    Choose ps :>>= k -> ps >>= \p -> go (p >>= k)
+    Choose ps :>>= k -> foldr interleave mzero [go (p >>= k) | p <- ps]
 
 -- | Generate one sequence described by a Grammarkov sequence
 -- builder. Nondeterministic choices are resolved randomly.
