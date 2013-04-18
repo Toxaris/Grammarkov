@@ -80,6 +80,30 @@ instance Ord e => Monoid (State e) where
     f' = f1 || f2
     m' = Map.unionWith mappend m1 m2
 
+-- | Follow a random path through a state space.
+markov :: RandomGen g => (s -> e -> (Integer, s)) -> (s -> Double) -> State e -> s -> g -> [e]
+markov step finish (State _ m) s g = go m s g where
+  go m s g =
+    let
+      nexts = [(p, (e, s, state)) | (e, state) <- Map.toList m, let (p, s) = step s e]
+      n = length nexts
+      k = sum (map fst nexts)
+      (x, g') = randomR (0, k - 1) g
+      (e, s', State f' m') = select x nexts
+    in e : if f'
+      then
+        let
+          (x, g'') = randomR (0, 1) g
+        in
+          if x < finish s' then [] else go m' s' g''
+      else go m' s' g'
+
+select :: Integer -> [(Integer, a)] -> a
+select _ [(_, x)] = x
+select n ((p, x) : rest)
+  | n < p = x
+  | otherwise = select (n - p) rest
+
 -- | Generate the state space described by a Grammarkov sequence
 -- builder.
 explore :: Ord e => Grammarkov e a -> State e
