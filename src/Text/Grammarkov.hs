@@ -7,6 +7,9 @@ module Text.Grammarkov
   , say
   , (<|>)
   , choose
+    -- * State Space
+  , State (State)
+  , explore
     -- * Executing Sequence Descriptions
   , generateAll
   , generateRandom
@@ -15,6 +18,9 @@ module Text.Grammarkov
 import Control.Monad.Logic
 import Control.Monad.Operational
 
+import Data.Map (Map)
+import qualified Data.Map as Map
+import Data.Monoid
 import Data.String
 
 import System.Random
@@ -63,3 +69,23 @@ generateRandom (Grammarkov p) = go p where
     Say x :>>= k -> fmap (x :) (go (k ()))
     Choose ps :>>= k -> randomRIO (0, length ps - 1) >>= \i -> go (ps !! i >>= k)
 
+-- | The state space described by a Grammarkov sequence builder.
+data State e
+  = State Bool (Map e (State e))
+  deriving Show
+
+instance Ord e => Monoid (State e) where
+  mempty = State False mempty
+  mappend (State f1 m1) (State f2 m2) = State f' m' where
+    f' = f1 || f2
+    m' = Map.unionWith mappend m1 m2
+
+-- | Generate the state space described by a Grammarkov sequence
+-- builder.
+explore :: Ord e => Grammarkov e a -> State e
+explore (Grammarkov p) = go p where
+  convert = undefined
+  go p = case view p of
+    Return _ -> State True Map.empty
+    Say x :>>= k -> State False (Map.singleton x (go (k ())))
+    Choose ps :>>= k -> mconcat [go (p >>= k) | p <- ps]

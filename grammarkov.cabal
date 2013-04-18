@@ -16,6 +16,7 @@ executable grammarkov
   other-modules:       Text.Grammarkov
   build-depends:       base ==4.5.*,
                        logict == 0.6.*,
-                       operational ==0.2.2.0,
-                       random == 1.0.*
+                       operational ==0.2.*,
+                       random == 1.0.*,
+                       containers ==0.4.*
   hs-source-dirs:      src
