@@ -13,6 +13,7 @@ module Text.Grammarkov
     -- * Executing Sequence Descriptions
   , generateAll
   , generateRandom
+  , markov
   ) where
 
 import Control.Monad.Logic
@@ -74,6 +75,7 @@ data State e
   = State Bool (Map e (State e))
   deriving Show
 
+-- | Merging states corresponds to forming the union of two languages.
 instance Ord e => Monoid (State e) where
   mempty = State False mempty
   mappend (State f1 m1) (State f2 m2) = State f' m' where
@@ -81,7 +83,24 @@ instance Ord e => Monoid (State e) where
     m' = Map.unionWith mappend m1 m2
 
 -- | Follow a random path through a state space.
-markov :: RandomGen g => (s -> e -> (Integer, s)) -> (s -> Double) -> State e -> s -> g -> [e]
+markov :: RandomGen g =>
+  (s -> e -> (Integer, s))
+  -- ^ Transition function in the Markov model.
+
+  -> (s -> Double)
+  -- ^ Probability of a state being final, between 0 and 1.
+
+  -> State e
+  -- ^ State space to walk through.
+
+  -> s
+  -- ^ Initial state for the Markov model.
+
+  -> g
+  -- ^ Random number generator.
+
+  -> [e]
+  -- ^ Random walk through the state space.
 markov step finish (State _ m) s g = go m s g where
   go m s g =
     let
