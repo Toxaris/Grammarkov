@@ -13,6 +13,7 @@ module Text.Grammarkov
     -- * Executing Sequence Descriptions
   , generateAll
   , generateRandom
+  , Model (Model)
   , markov
   ) where
 
@@ -82,26 +83,35 @@ instance Ord e => Monoid (State e) where
     f' = f1 || f2
     m' = Map.unionWith mappend m1 m2
 
+-- | Markov model with states s and outputs e.
+--
+-- The first component is a function @f@ so that @'fst' (f s e)@
+-- is the probability of producing element @e@ when in state @s@
+-- and @'snd' (f s e)@ is the state reached after producing an @e@
+-- when in state @s@. The integer probabilities will be
+-- normalized for one @s@ and all @e@ a client is interested in.
+--
+-- The second component is a function @g@ so that @g s@ is the
+-- probability that sequence generation ends in state @s@. The
+-- probability should be between @0.0@ and @1.0@.
+--
+-- The third component is the initial state 's'.
+data Model s e = Model (s -> e -> (Integer, s)) (s -> Double) s
+
 -- | Follow a random path through a state space.
 markov :: RandomGen g =>
-  (s -> e -> (Integer, s))
-  -- ^ Transition function in the Markov model.
-
-  -> (s -> Double)
-  -- ^ Probability of a state being final, between 0 and 1.
+  Model s e
+  -- ^ Markov model.
 
   -> State e
   -- ^ State space to walk through.
-
-  -> s
-  -- ^ Initial state for the Markov model.
 
   -> g
   -- ^ Random number generator.
 
   -> [e]
   -- ^ Random walk through the state space.
-markov step finish (State _ m) s g = go m s g where
+markov (Model step finish s) (State _ m) g = go m s g where
   go m s g =
     let
       nexts = [(p, (e, s, state)) | (e, state) <- Map.toList m, let (p, s) = step s e]
